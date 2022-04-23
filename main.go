@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/cycade/service-unit/images"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type interperter struct {
@@ -81,10 +84,13 @@ func (u *UnitMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	RegisterMetricsFunc(*images.FunctionLatency)
 	ver := os.Getenv("VERSION")
 
 	mux := http.NewServeMux()
 	mux.Handle("/", &UnitMux{version: ver})
+	mux.HandleFunc("/images", images.Handler)
+	mux.Handle("/metrics", promhttp.Handler())
 
 	log.Println("beeper start ...")
 	http.ListenAndServe(":8080", mux)
